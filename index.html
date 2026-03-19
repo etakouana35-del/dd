@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>ERP Stock & Facturation - Ets GOOD DAV NET</title>
+<style>
+body{font-family:Arial;margin:0;transition:0.3s}
+header{background:#0a7cff;color:white;padding:15px;text-align:center;transition:0.3s;cursor:text}
+nav{background:#222;padding:10px;transition:0.3s}
+nav button, nav input, nav label{
+ background:#444;color:white;border:none;padding:8px;margin:5px;
+ cursor:pointer;transition:.2s;
+}
+nav button:hover{background:#0a7cff;transform:scale(1.05)}
+nav button:active{transform:scale(.95)}
+section{display:none;padding:20px;transition:0.3s}
+.active{display:block}
+.card{background:white;padding:15px;margin:10px 0;box-shadow:0 0 5px rgba(0,0,0,.1);transition:0.3s}
+input,select,button{padding:8px;margin:5px}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
+.alert{color:red;font-weight:bold}
+.suggest{background:#eee;padding:5px;cursor:pointer}
+.suggest:hover{background:#ccc}
+#editModal{background:#fff;padding:15px;box-shadow:0 0 10px rgba(0,0,0,.2);}
+</style>
+</head>
+<body>
+
+<header>
+<h1 id="headerTitle" contenteditable="true" style="outline:none;">ERP Stock & Facturation</h1>
+<p id="headerSub" contenteditable="true" style="outline:none;">Ets GOOD DAV NET</p>
+</header>
+
+<nav>
+<button onclick="show('dashboard')">Dashboard</button>
+<button onclick="accessProduits()">Produits 🔒</button>
+<button onclick="show('clients')">Clients</button>
+<button onclick="show('facture')">Facturation</button>
+<button onclick="changerTheme()">🌙 Thème</button>
+<button onclick="changerFond()">🖼️ Fond d'écran</button>
+<label style="color:white;">💡 Luminosité</label>
+<input type="range" min="50" max="150" value="100" id="luminositeSlider" oninput="changerLuminosite(this.value)">
+</nav>
+
+<section id="dashboard" class="active">
+<div class="card">
+<h2>Tableau de bord</h2>
+<p>Total Produits : <span id="totalProduits">0</span></p>
+<p>Valeur Stock : <span id="valeurStock">0</span></p>
+<p class="alert" id="alerteStock"></p>
+</div>
+</section>
+
+<section id="produits">
+<div class="card">
+<h2>🔒 Sécurité Produits</h2>
+<input id="newPass" placeholder="Nouveau mot de passe">
+<button onclick="changerPass()">Changer</button>
+</div>
+
+<div class="card">
+<h2>Ajouter Produit</h2>
+<input id="pnom" placeholder="Nom produit">
+<input id="pprix" type="number" placeholder="Prix">
+<input id="pstock" type="number" placeholder="Stock">
+<input id="pmin" type="number" placeholder="Stock min">
+<button onclick="addProduit()">Ajouter</button>
+</div>
+
+<div class="card">
+<h2>Liste Produits</h2>
+<table>
+<thead>
+<tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Stock Min</th><th>Actions</th></tr>
+</thead>
+<tbody id="produitTable"></tbody>
+</table>
+</div>
+
+<div class="card">
+<h2>📜 Historique des factures</h2>
+<button onclick="supprimerHistorique()" style="background:red;color:white;">🗑️ Supprimer Historique Factures</button>
+<table>
+<thead>
+<tr><th>Date</th><th>Client</th><th>Total</th></tr>
+</thead>
+<tbody id="factHist"></tbody>
+</table>
+</div>
+
+<div id="editModal" style="display:none" class="card">
+<h2>Modifier / Approvisionner Produit</h2>
+<input id="editNom" placeholder="Nom">
+<input id="editPrix" type="number" placeholder="Prix">
+<input id="editStock" type="number" placeholder="Stock">
+<input id="editMin" type="number" placeholder="Stock min">
+<button onclick="saveModification()">💾 Enregistrer</button>
+<button onclick="closeModal()">❌ Annuler</button>
+</div>
+</section>
+
+<section id="clients">
+<div class="card">
+<h2>Clients</h2>
+<ul id="clientList"></ul>
+</div>
+</section>
+
+<section id="facture">
+<div class="card" id="zoneFacture">
+<h2>Créer Facture</h2>
+<input id="clientFacture" placeholder="Nom du client" onkeyup="suggestClient()">
+<div id="clientSug"></div>
+<input id="searchProduit" placeholder="Rechercher produit" onkeyup="filtrerProduits()">
+<div id="prodSug"></div>
+<select id="produitSelect"></select>
+<input id="qte" type="number" placeholder="Quantité">
+<button onclick="ajouterFacture()">Ajouter</button>
+<h3>Total : <span id="totalFacture">0</span></h3>
+<button onclick="finaliserFacture()">💾 Enregistrer</button>
+<button onclick="imprimerFacture()">🖨️ PDF</button>
+<button onclick="telechargerPDF()">💾 Télécharger PDF</button>
+</div>
+</section>
+
+<!-- Librairies jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+let produits=JSON.parse(localStorage.getItem("produits"))||[];
+let clients=JSON.parse(localStorage.getItem("clients"))||[];
+let factures=JSON.parse(localStorage.getItem("factures"))||[];
+let pass=localStorage.getItem("pass")||"52522";
+let total=0;
+let editIndex=null;
+let factureEnCours = [];
+
+// Entête modifiable automatique
+let headerTitle = localStorage.getItem("headerTitle") || "ERP Stock & Facturation";
+let headerSub = localStorage.getItem("headerSub") || "Ets GOOD DAV NET";
+document.getElementById("headerTitle").innerText = headerTitle;
+document.getElementById("headerSub").innerText = headerSub;
+document.getElementById("headerTitle").addEventListener("input", ()=>{localStorage.setItem("headerTitle", document.getElementById("headerTitle").innerText);});
+document.getElementById("headerSub").addEventListener("input", ()=>{localStorage.setItem("headerSub", document.getElementById("headerSub").innerText);});
+
+function save(){localStorage.setItem("produits",JSON.stringify(produits));localStorage.setItem("clients",JSON.stringify(clients));localStorage.setItem("factures",JSON.stringify(factures));localStorage.setItem("pass",pass);}
+function show(id){document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");}
+function accessProduits(){let p=prompt("Mot de passe Produits");if(p===pass) show("produits"); else alert("Mot de passe incorrect");}
+function changerPass(){let np=newPass.value.trim();if(!np)return alert("Le mot de passe ne peut pas être vide");pass=np;save();alert("Mot de passe modifié");}
+function addProduit(){let nom=pnom.value.trim();let prix=+pprix.value;let stock=+pstock.value;let min=+pmin.value;if(!nom||prix<0||stock<0||min<0)return alert("Remplir correctement tous les champs !");produits.push({nom,prix,stock,min});save();afficherProduits();majDashboard();}
+function afficherProduits(){produitTable.innerHTML="";produitSelect.innerHTML="";produits.forEach((p,i)=>{produitTable.innerHTML+=`<tr><td>${p.nom}</td><td>${p.prix}</td><td>${p.stock}</td><td>${p.min}</td><td><button onclick="ouvrirEdit(${i})">✏️ Modifier</button><button onclick="approvisionner(${i})">➕ Approvisionner</button><button onclick="produits.splice(${i},1); save(); afficherProduits(); majDashboard()">❌ Supprimer</button></td></tr>`;produitSelect.innerHTML+=`<option value="${i}">${p.nom}</option>`;});save();}
+function approvisionner(i){let q=Number(prompt("Quantité à ajouter au stock:"));if(isNaN(q)||q<=0){alert("Veuillez entrer un nombre valide supérieur à 0");return;}produits[i].stock+=q;save();afficherProduits();majDashboard();}
+function ouvrirEdit(i){editIndex=i;let p=produits[i];editNom.value=p.nom;editPrix.value=p.prix;editStock.value=p.stock;editMin.value=p.min;editModal.style.display="block";}
+function saveModification(){if(editIndex===null)return;let nom=editNom.value.trim();let prix=+editPrix.value;let stock=+editStock.value;let min=+editMin.value;if(!nom||prix<0||stock<0||min<0)return alert("Remplir correctement tous les champs !");produits[editIndex]={nom,prix,stock,min};editIndex=null;editModal.style.display="none";save();afficherProduits();majDashboard();}
+function closeModal(){editIndex=null;editModal.style.display="none";}
+
+function filtrerProduits(){prodSug.innerHTML="";let v=searchProduit.value.toLowerCase().trim();if(!v)return;produits.forEach((p,i)=>{if(p.nom.toLowerCase().startsWith(v)){let div=document.createElement("div");div.className="suggest";div.innerText=p.nom;div.onclick=()=>{selectProd(i)};prodSug.appendChild(div);}});}
+function selectProd(i){produitSelect.value=i;searchProduit.value=produits[i].nom;prodSug.innerHTML="";}
+function suggestClient(){clientSug.innerHTML="";let v=clientFacture.value.toLowerCase();clients.forEach(c=>{if(c.toLowerCase().startsWith(v)){clientSug.innerHTML+=`<div class="suggest" onclick="clientFacture.value='${c}'">${c}</div>`;}});}
+function ajouterFacture(){let p=produits[produitSelect.value];let q=+qte.value;if(!p)return alert("Produit non sélectionné !");if(q<=0)return alert("Quantité invalide !");if(p.stock<q)return alert("Stock insuffisant pour "+p.nom);p.stock-=q;let exist=factureEnCours.find(item=>item.nom===p.nom);if(exist){exist.qte+=q;exist.total=exist.qte*p.prix;}else{factureEnCours.push({nom:p.nom,prix:p.prix,qte:q,total:p.prix*q});}total=factureEnCours.reduce((s,item)=>s+item.total,0);totalFacture.innerText=total;afficherProduits();majDashboard();qte.value="";searchProduit.value="";produitSelect.value="";prodSug.innerHTML="";}
+function finaliserFacture(){let c=clientFacture.value.trim();if(!c)return alert("Nom client requis");if(!clients.includes(c))clients.push(c);factures.push({date:new Date().toLocaleString(),client:c,total:total,produits:[...factureEnCours]});factureEnCours=[];total=0;totalFacture.innerText=0;clientFacture.value="";afficherFactures();majDashboard();save();}
+function afficherFactures(){factHist.innerHTML="";factures.forEach(f=>{factHist.innerHTML+=`<tr><td>${f.date}</td><td>${f.client}</td><td>${f.total} F</td></tr>`;});}
+function supprimerHistorique(){if(confirm("Voulez-vous vraiment supprimer tout l'historique des factures ?")){factures=[];save();afficherFactures();alert("Historique supprimé !");}}
+function majDashboard(){totalProduits.innerText=produits.length;valeurStock.innerText=produits.reduce((s,p)=>s+p.prix*p.stock,0);let alertMsg=produits.filter(p=>p.stock<p.min).map(p=>p.nom).join(", ");alerteStock.innerText=alertMsg?"Stock bas: "+alertMsg:"";}
+
+// Imprimer facture
+function imprimerFacture(){
+  const client = clientFacture.value || "—";
+  const date = new Date().toLocaleString();
+  const enteteTitre = document.getElementById("headerTitle").innerText;
+  const enteteSub = document.getElementById("headerSub").innerText;
+
+  let produitsAFacturer = factureEnCours.length ? factureEnCours : (factures.length ? factures[factures.length-1].produits : []);
+
+  let contenuProduits = produitsAFacturer.map(p =>
+    `<tr>
+      <td>${p.nom}</td>
+      <td>${p.qte}</td>
+      <td>${p.prix.toFixed(2)} F</td>
+      <td>${p.total.toFixed(2)} F</td>
+    </tr>`
+  ).join("");
+
+  const totalP = produitsAFacturer.reduce((s,p)=>s+p.total,0).toFixed(2);
+
+  let contenu = `
+  <html>
+  <head>
+    <title>Facture - ${enteteTitre}</title>
+    <style>
+      body{font-family:Arial;padding:30px}
+      h1{text-align:center;color:#0a7cff}
+      .entete{text-align:center;margin-bottom:30px}
+      .infos{margin-bottom:20px}
+      table{width:100%;border-collapse:collapse;margin-top:20px}
+      th,td{border:1px solid #000;padding:8px;text-align:center}
+      .total{font-size:18px;font-weight:bold;text-align:right;margin-top:20px}
+      @media print{button,input,select{display:none}}
+    </style>
+  </head>
+  <body>
+    <div class="entete">
+      <h1>FACTURE</h1>
+      <p><strong>${enteteTitre}</strong></p>
+      <p>${enteteSub}</p>
+    </div>
+    <div class="infos">
+      <p><strong>Client :</strong> ${client}</p>
+      <p><strong>Date :</strong> ${date}</p>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Désignation</th>
+          <th>Quantité</th>
+          <th>Prix unitaire</th>
+          <th>Montant</th>
+        </tr>
+      </thead>
+      <tbody>${contenuProduits}</tbody>
+    </table>
+    <div class="total">TOTAL : ${totalP} F CFA</div>
+  </body>
+  </html>`;
+
+  let w = window.open("","","width=800,height=600");
+  w.document.write(contenu);
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
+// Télécharger facture en PDF
+function telechargerPDF() {
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+
+  // Lire l'entête actuel
+  const enteteTitre = document.getElementById("headerTitle").innerText;
+  const enteteSub = document.getElementById("headerSub").innerText;
+
+  const client = clientFacture.value || "—";
+  const date = new Date().toLocaleString();
+
+  let produitsAFacturer = factureEnCours.length ? factureEnCours : (factures.length ? factures[factures.length-1].produits : []);
+
+  doc.setFontSize(18);
+  doc.text("FACTURE", 105, 20, null, null, "center");
+  doc.setFontSize(12);
+  doc.text(enteteTitre, 105, 28, null, null, "center");
+  doc.text(enteteSub, 105, 34, null, null, "center");
+
+  doc.text(`Client : ${client}`, 14, 50);
+  doc.text(`Date : ${date}`, 14, 56);
+
+  let startY = 70;
+  doc.autoTable({
+    startY,
+    head: [['Désignation', 'Quantité', 'Prix unitaire', 'Montant']],
+    body: produitsAFacturer.map(p => [p.nom, p.qte, p.prix.toFixed(2) + " F", p.total.toFixed(2) + " F"]),
+    theme: 'grid',
+    headStyles: { fillColor: [10, 124, 255] }
+  });
+
+  let totalP = produitsAFacturer.reduce((s,p)=>s+p.total,0).toFixed(2);
+  doc.text(`TOTAL : ${totalP} F CFA`, 14, doc.lastAutoTable.finalY + 10);
+
+  doc.save(`Facture_${Date.now()}.pdf`);
+}
+
+// THEME, FOND ET LUMINOSITE
+let theme=localStorage.getItem("theme")||"clair";
+let fond=localStorage.getItem("fond")||"";
+let luminosite=localStorage.getItem("luminosite")||100;
+function appliquerTheme(){if(theme==="sombre"){document.body.style.background="#121212";document.body.style.color="#eee";document.querySelectorAll("header, nav, .card, table").forEach(el=>{el.style.background=el.classList.contains("card")?"#1e1e1e":(el.tagName==="NAV"?"#222":"#0a7cff");el.style.color="#eee";});}else{document.body.style.background="#f2f4f7";document.body.style.color="#000";document.querySelectorAll("header, nav, .card, table").forEach(el=>{el.style.background=el.classList.contains("card")?"#fff":(el.tagName==="NAV"?"#222":"#0a7cff");el.style.color=el.classList.contains("card")?"#000":"#fff";});}localStorage.setItem("theme",theme);}
+function changerTheme(){theme=theme==="clair"?"sombre":"clair";appliquerTheme();}
+function appliquerFond(){document.body.style.backgroundImage=fond?`url(${fond})` : "";document.body.style.backgroundSize="cover";document.body.style.backgroundRepeat="no-repeat";}
+function changerFond(){let url=prompt("Entrez l'URL de l'image de fond:");if(url){fond=url;localStorage.setItem("fond",fond);appliquerFond();}}
+function changerLuminosite(val){document.body.style.filter=`brightness(${val}%)`;localStorage.setItem("luminosite",val);}
+
+// Initialisation
+afficherProduits();afficherFactures();majDashboard();appliquerTheme();appliquerFond();changerLuminosite(luminosite);
+</script>
+</body>
+</html>
