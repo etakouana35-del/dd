@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+
+
+
+<!DOCTYPE html> 
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -23,8 +26,31 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 .suggest{background:#eee;padding:5px;cursor:pointer}
 .suggest:hover{background:#ccc}
 #editModal{background:#fff;padding:15px;box-shadow:0 0 10px rgba(0,0,0,.2);}
+
+/* ------------------- BOUTONS JAUNES RONDS ------------------- */
+nav button.btn-jaune {
+    background: #FFD700; /* Jaune */
+    color: #000; /* Texte noir */
+    border-radius: 25px; /* Rond */
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, background 0.2s;
+}
+
+nav button.btn-jaune:hover {
+    background: #FFC107; /* Jaune plus foncé au survol */
+    transform: scale(1.05);
+}
+
+nav button.btn-jaune:active {
+    transform: scale(0.95);
+}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -32,16 +58,27 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 <p id="headerSub" contenteditable="true" style="outline:none;">Ets GOOD DAV NET</p>
 </header>
 
+
 <nav>
-<button onclick="show('dashboard')">Dashboard</button>
-<button onclick="accessProduits()">Produits 🔒</button>
-<button onclick="show('clients')">Clients</button>
-<button onclick="show('facture')">Facturation</button>
-<button onclick="changerTheme()">🌙 Thème</button>
-<button onclick="changerFond()">🖼️ Fond d'écran</button>
-<label style="color:white;">💡 Luminosité</label>
-<input type="range" min="50" max="150" value="100" id="luminositeSlider" oninput="changerLuminosite(this.value)">
+  <button class="btn-jaune" onclick="toggleParam()">⚙️ Paramètre</button>
+  <button class="btn-jaune" onclick="show('dashboard')">Dashboard</button>
+  <button class="btn-jaune" onclick="accessProduits()">Produits 🔒</button>
+  <button class="btn-jaune" onclick="show('clients')">Clients</button>
+  <button class="btn-jaune" onclick="show('facture')">Facturation</button>
 </nav>
+
+<div id="paramMenu" style="display:none;position:absolute;background:#333;padding:10px;border-radius:8px;">
+<button onclick="changerTheme()">🌙 Thème</button><br>
+<button onclick="changerFond()">🖼️ Fond d'écran</button><br>
+<button onclick="changerLuminosite(prompt('Luminosité (50-150)',100))">💡 Luminosité</button><br>
+<!-- Bloc 1 : Bouton Annuler Facture -->
+<button class="btn-jaune" onclick="accessAnnulerFacture()">🗑️ Annuler une facture</button>
+<button onclick="copier()">Copier</button><br>
+<button onclick="couper()">Couper</button><br>
+<button onclick="coller()">Coller</button><br>
+<button onclick="toutSelection()">Tout sélectionner</button>
+</div>
+
 
 <section id="dashboard" class="active">
 <div class="card">
@@ -79,6 +116,12 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 </div>
 
 <div class="card">
+  <h2>💰 Ventes par Produit</h2>
+  <button onclick="afficherVentesProduit()">LES VENTES</button>
+  <div id="ventesProduit" style="margin-top:10px;"></div>
+</div>
+
+<div class="card">
 <h2>📜 Historique des factures</h2>
 <button onclick="supprimerHistorique()" style="background:red;color:white;">🗑️ Supprimer Historique Factures</button>
 <table>
@@ -89,7 +132,7 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 </table>
 </div>
 
-<div id="editModal" style="display:none" class="card">
+<div id="editModal" style="display:none" class="card"> 
 <h2>Modifier / Approvisionner Produit</h2>
 <input id="editNom" placeholder="Nom">
 <input id="editPrix" type="number" placeholder="Prix">
@@ -124,14 +167,52 @@ th,td{border:1px solid #ccc;padding:8px;text-align:center}
 </div>
 </section>
 
+<section id="annulerFacture">
+  <div class="card">
+    <h2>📜 Historique des factures (Annulation)</h2>
+    <button onclick="fermerAnnulerFacture()" style="background:#0a7cff;color:white;border:none;padding:8px;margin:5px;border-radius:8px;cursor:pointer;">❌ Fermer</button>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Client</th><th>Total</th><th>Action</th></tr>
+      </thead>
+      <tbody id="factHistAnnuler"></tbody>
+    </table>
+  </div>
+</section>
+
 <!-- Librairies jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+function toggleParam(){
+ let m=document.getElementById("paramMenu");
+ m.style.display = (m.style.display==="none")?"block":"none";
+}
+
+// Clipboard actions
+function copier(){document.execCommand('copy');alert('Texte copié');}
+function couper(){document.execCommand('cut');alert('Texte coupé');}
+function coller(){navigator.clipboard.readText().then(t=>{document.activeElement.value+=t});}
+function toutSelection(){let el=document.activeElement;if(el.select) el.select();}
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js">
+function toggleParam(){
+ let m=document.getElementById("paramMenu");
+ m.style.display = (m.style.display==="none")?"block":"none";
+}
+
+// Clipboard actions
+function copier(){document.execCommand('copy');alert('Texte copié');}
+function couper(){document.execCommand('cut');alert('Texte coupé');}
+function coller(){navigator.clipboard.readText().then(t=>{document.activeElement.value+=t});}
+function toutSelection(){let el=document.activeElement;if(el.select) el.select();}
+
+</script>
 
 <script>
 let produits=JSON.parse(localStorage.getItem("produits"))||[];
 let clients=JSON.parse(localStorage.getItem("clients"))||[];
-let factures=JSON.parse(localStorage.getItem("factures"))||[];
+let factures = JSON.parse(localStorage.getItem("factures")) || [];
+let facturesAnnulables = JSON.parse(localStorage.getItem("facturesAnnulables")) || [];
 let pass=localStorage.getItem("pass")||"52522";
 let total=0;
 let editIndex=null;
@@ -145,7 +226,13 @@ document.getElementById("headerSub").innerText = headerSub;
 document.getElementById("headerTitle").addEventListener("input", ()=>{localStorage.setItem("headerTitle", document.getElementById("headerTitle").innerText);});
 document.getElementById("headerSub").addEventListener("input", ()=>{localStorage.setItem("headerSub", document.getElementById("headerSub").innerText);});
 
-function save(){localStorage.setItem("produits",JSON.stringify(produits));localStorage.setItem("clients",JSON.stringify(clients));localStorage.setItem("factures",JSON.stringify(factures));localStorage.setItem("pass",pass);}
+function save(){
+  localStorage.setItem("produits", JSON.stringify(produits));
+  localStorage.setItem("clients", JSON.stringify(clients));
+  localStorage.setItem("factures", JSON.stringify(factures));
+  localStorage.setItem("facturesAnnulables", JSON.stringify(facturesAnnulables));
+  localStorage.setItem("pass", pass);
+}
 function show(id){document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");}
 function accessProduits(){let p=prompt("Mot de passe Produits");if(p===pass) show("produits"); else alert("Mot de passe incorrect");}
 function changerPass(){let np=newPass.value.trim();if(!np)return alert("Le mot de passe ne peut pas être vide");pass=np;save();alert("Mot de passe modifié");}
@@ -160,14 +247,156 @@ function filtrerProduits(){prodSug.innerHTML="";let v=searchProduit.value.toLowe
 function selectProd(i){produitSelect.value=i;searchProduit.value=produits[i].nom;prodSug.innerHTML="";}
 function suggestClient(){clientSug.innerHTML="";let v=clientFacture.value.toLowerCase();clients.forEach(c=>{if(c.toLowerCase().startsWith(v)){clientSug.innerHTML+=`<div class="suggest" onclick="clientFacture.value='${c}'">${c}</div>`;}});}
 function ajouterFacture(){let p=produits[produitSelect.value];let q=+qte.value;if(!p)return alert("Produit non sélectionné !");if(q<=0)return alert("Quantité invalide !");if(p.stock<q)return alert("Stock insuffisant pour "+p.nom);p.stock-=q;let exist=factureEnCours.find(item=>item.nom===p.nom);if(exist){exist.qte+=q;exist.total=exist.qte*p.prix;}else{factureEnCours.push({nom:p.nom,prix:p.prix,qte:q,total:p.prix*q});}total=factureEnCours.reduce((s,item)=>s+item.total,0);totalFacture.innerText=total;afficherProduits();majDashboard();qte.value="";searchProduit.value="";produitSelect.value="";prodSug.innerHTML="";}
-function finaliserFacture(){let c=clientFacture.value.trim();if(!c)return alert("Nom client requis");if(!clients.includes(c))clients.push(c);factures.push({date:new Date().toLocaleString(),client:c,total:total,produits:[...factureEnCours]});factureEnCours=[];total=0;totalFacture.innerText=0;clientFacture.value="";afficherFactures();majDashboard();save();}
-function afficherFactures(){factHist.innerHTML="";factures.forEach(f=>{factHist.innerHTML+=`<tr><td>${f.date}</td><td>${f.client}</td><td>${f.total} F</td></tr>`;});}
-function supprimerHistorique(){if(confirm("Voulez-vous vraiment supprimer tout l'historique des factures ?")){factures=[];save();afficherFactures();alert("Historique supprimé !");}}
-function majDashboard(){totalProduits.innerText=produits.length;valeurStock.innerText=produits.reduce((s,p)=>s+p.prix*p.stock,0);let alertMsg=produits.filter(p=>p.stock<p.min).map(p=>p.nom).join(", ");alerteStock.innerText=alertMsg?"Stock bas: "+alertMsg:"";}
+function finaliserFacture(){
+  let c=clientFacture.value.trim();
+  if(!c)return alert("Nom client requis");
 
+  if(!clients.includes(c))clients.push(c);
+
+  let nouvelleFacture = {
+    date:new Date().toLocaleString(),
+    client:c,
+    total:total,
+    produits:[...factureEnCours]
+  };
+
+  factures.push(nouvelleFacture);
+  facturesAnnulables.push(nouvelleFacture);
+
+  factureEnCours=[];
+  total=0;
+  totalFacture.innerText=0;
+  clientFacture.value="";
+
+  afficherFactures();
+  majDashboard();
+  save();
+}
+
+function afficherFactures(){factHist.innerHTML="";factures.forEach(f=>{factHist.innerHTML+=`<tr><td>${f.date}</td><td>${f.client}</td><td>${f.total} F</td></tr>`;});}
+function accessAnnulerFacture(){
+  // Masquer toutes les autres sections
+  document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+  
+  // Afficher uniquement la section Annuler Facture
+  document.getElementById("annulerFacture").classList.add("active");
+
+  // Afficher l'historique des factures avec bouton supprimer
+  afficherFacturesPourAnnulation();
+}
+
+function afficherFacturesPourAnnulation(){
+  const tbody = document.getElementById("factHistAnnuler");
+  tbody.innerHTML = "";
+
+  if(facturesAnnulables.length === 0){
+    tbody.innerHTML = "<tr><td colspan='4'>Aucune facture à afficher</td></tr>";
+    return;
+  }
+
+  facturesAnnulables.forEach((f, index) => {
+    tbody.innerHTML += `<tr>
+      <td>${f.date}</td>
+      <td>${f.client}</td>
+      <td>${f.total} F</td>
+      <td><button onclick="supprimerFacture(${index})" style="background:red;color:white;">Supprimer</button></td>
+    </tr>`;
+  });
+}
+
+// Bloc 4 : Supprimer une facture spécifique
+function supprimerFacture(index){
+  if(confirm(`Voulez-vous vraiment supprimer la facture du ${facturesAnnulables[index].date} ?`)){
+    facturesAnnulables.splice(index, 1);
+    save();
+    afficherFacturesPourAnnulation();
+    majDashboard();
+    alert("Facture supprimée !");
+  }
+}
+function supprimerHistorique(){if(confirm("Voulez-vous vraiment supprimer tout l'historique des factures ?")){factures=[];save();afficherFactures();alert("Historique supprimé !");}}
+function majDashboard(){
+    totalProduits.innerText = produits.length;
+    valeurStock.innerText = produits.reduce((s,p)=>s+p.prix*p.stock,0);
+    let alertMsg = produits.filter(p=>p.stock<p.min).map(p=>p.nom).join(", ");
+    alerteStock.innerText = alertMsg ? "Stock bas: "+alertMsg : "";
+}
+
+// ⚡ Nouveau bloc pour fermer l'historique des factures
+function fermerAnnulerFacture(){
+    document.getElementById("annulerFacture").classList.remove("active");
+    show('dashboard'); // ou une autre section par défaut
+}
+
+function afficherVentesProduit() {
+    if(produits.length === 0) return alert("Aucun produit disponible !");
+    
+    let choix = prompt("Entrez le numéro du produit à consulter :\n" + 
+                       produits.map((p,i)=>`${i+1}. ${p.nom}`).join("\n"));
+    if(!choix) return;
+
+    let index = parseInt(choix)-1;
+    if(isNaN(index) || index < 0 || index >= produits.length) 
+        return alert("Produit invalide !");
+
+    let pNom = produits[index].nom;
+    let ventes = [];
+
+    factures.forEach(f => {
+        f.produits.forEach(item => {
+            if(item.nom === pNom) {
+                ventes.push({
+                    date: f.date,
+                    client: f.client,
+                    qte: item.qte,
+                    montant: item.total
+                });
+            }
+        });
+    });
+
+    if(ventes.length === 0) {
+        ventesProduit.innerHTML = `
+            <button onclick="fermerVentes()" style="background:red;color:white;">❌ Fermer</button>
+            <p>Aucune vente enregistrée pour "${pNom}".</p>
+        `;
+        return;
+    }
+
+    let html = `
+        <button onclick="fermerVentes()" style="background:red;color:white;margin-bottom:10px;">❌ Fermer</button>
+        <h3>Historique des ventes de "${pNom}"</h3>
+        <table>
+        <thead>
+            <tr>
+                <th>Date et heure</th>
+                <th>Client</th>
+                <th>Quantité</th>
+                <th>Montant (F CFA)</th>
+            </tr>
+        </thead>
+        <tbody>
+        ${ventes.map(v=>`<tr>
+            <td>${v.date}</td>
+            <td>${v.client}</td>
+            <td>${v.qte}</td>
+            <td>${v.montant.toFixed(2)}</td>
+        </tr>`).join('')}
+        </tbody>
+        </table>
+    `;
+
+    ventesProduit.innerHTML = html;
+}
+
+// 👉 Fonction séparée (IMPORTANT)
+function fermerVentes(){
+    ventesProduit.innerHTML = "";
+}
+   
 // Imprimer facture
 function imprimerFacture(){
-  const client = clientFacture.value || "—";
+  const client = clientFacture.value || (factures.length ? factures[factures.length-1].client : "—");
   const date = new Date().toLocaleString();
   const enteteTitre = document.getElementById("headerTitle").innerText;
   const enteteSub = document.getElementById("headerSub").innerText;
@@ -282,6 +511,18 @@ function changerLuminosite(val){document.body.style.filter=`brightness(${val}%)`
 
 // Initialisation
 afficherProduits();afficherFactures();majDashboard();appliquerTheme();appliquerFond();changerLuminosite(luminosite);
+
+function toggleParam(){
+ let m=document.getElementById("paramMenu");
+ m.style.display = (m.style.display==="none")?"block":"none";
+}
+
+// Clipboard actions
+function copier(){document.execCommand('copy');alert('Texte copié');}
+function couper(){document.execCommand('cut');alert('Texte coupé');}
+function coller(){navigator.clipboard.readText().then(t=>{document.activeElement.value+=t});}
+function toutSelection(){let el=document.activeElement;if(el.select) el.select();}
+
 </script>
 </body>
 </html>
