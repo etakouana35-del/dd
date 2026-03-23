@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html> 
 <html lang="fr">
 <head>
@@ -48,6 +46,93 @@ nav button.btn-jaune:hover {
 nav button.btn-jaune:active {
     transform: scale(0.95);
 }
+/* ------------------- Footer tableau adaptatif ------------------- */
+/* Style de base pour le footer du tableau (thème clair) */
+tfoot tr {
+    font-weight: bold;
+    padding: 5px;
+    background-color: #eee; /* fond clair */
+    color: #000;             /* texte noir */
+}
+
+/* Style pour le thème sombre */
+body.sombre tfoot tr {
+    background-color: #333; /* fond sombre */
+    color: #fff;             /* texte clair */
+}
+/* CHAMPS ET BOUTONS SECTEUR PRODUITS */
+#produits input, 
+#produits select {
+    font-weight: bold;
+    color: #fff; /* texte blanc par défaut */
+}
+
+#produits button {
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+/* Classes de couleur */
+.produit-rouge { background-color: #FF0000; color: #fff; }
+.produit-jaune { background-color: #FFD700; color: #000; }
+.produit-bleu { background-color: #0a7cff; color: #fff; }
+/* ------------------- BOUTONS PARAMÈTRE ------------------- */
+#paramMenu button {
+    font-weight: bold;       /* texte gras */
+    font-style: italic;      /* texte italique */
+    color: #fff;             /* texte blanc */
+    border: none;
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+/* Boutons en alternance bleu et jaune */
+#paramMenu button:nth-child(odd) { background-color: #0a7cff; }  /* bleu */
+#paramMenu button:nth-child(even) { background-color: #FFD700; color: #000; } /* jaune avec texte noir */
+#paramMenu button:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+#paramMenu button:active {
+    transform: scale(0.95);
+}
+/* Bande Dashboard */
+#dashboard {
+    background-color: #B2B2B2; /* gris cendré */
+    color: #fff;               /* texte blanc */
+    padding: 20px;
+}
+
+/* Bande Clients */
+#clients {
+    background-color: #fff;    /* blanc */
+    color: #000;               /* texte noir */
+    padding: 20px;
+}
+/* Bande Dashboard */
+#dashboard {
+    background-color: #B2B2B2; /* gris cendré */
+    color: #fff;               /* texte blanc */
+    padding: 20px;
+}
+
+/* Bande Clients */
+#clients {
+    background-color: #fff;    /* blanc */
+    color: #000;               /* texte noir */
+    padding: 20px;
+}
+
+#dashboard .card:hover,
+#clients .card:hover {
+    transform: scale(1.02);
+    transition: 0.2s;
+}
 </style>
 </head>
 
@@ -89,48 +174,81 @@ nav button.btn-jaune:active {
 </div>
 </section>
 
-<section id="produits">
-<div class="card">
-<h2>🔒 Sécurité Produits</h2>
-<input id="newPass" placeholder="Nouveau mot de passe">
-<button onclick="changerPass()">Changer</button>
-</div>
+<section id="produits">  
 
-<div class="card">
-<h2>Ajouter Produit</h2>
-<input id="pnom" placeholder="Nom produit">
-<input id="pprix" type="number" placeholder="Prix">
-<input id="pstock" type="number" placeholder="Stock">
-<input id="pmin" type="number" placeholder="Stock min">
-<button onclick="addProduit()">Ajouter</button>
-</div>
+  <div class="card">
+    <h2>🔒 Sécurité Produits</h2>
+    <input id="newPass" placeholder="Nouveau mot de passe">
+    <button onclick="changerPass()">Changer</button>
+  </div>
 
-<div class="card">
-<h2>Liste Produits</h2>
-<table>
-<thead>
-<tr><th>Produit</th><th>Prix</th><th>Stock</th><th>Stock Min</th><th>Actions</th></tr>
-</thead>
-<tbody id="produitTable"></tbody>
-</table>
-</div>
+  <button onclick="toggleListeProduits()" class="btn-jaune">📦 Liste Produits</button>
 
-<div class="card">
-  <h2>💰 Ventes par Produit</h2>
-  <button onclick="afficherVentesProduit()">LES VENTES</button>
-  <div id="ventesProduit" style="margin-top:10px;"></div>
-</div>
+  <div id="blocProduits" style="display:none;">
 
-<div class="card">
-<h2>📜 Historique des factures</h2>
-<button onclick="supprimerHistorique()" style="background:red;color:white;">🗑️ Supprimer Historique Factures</button>
-<table>
-<thead>
-<tr><th>Date</th><th>Client</th><th>Total</th></tr>
-</thead>
-<tbody id="factHist"></tbody>
-</table>
-</div>
+    <div class="card">
+      <h2>Ajouter Produit</h2>
+      <input id="pnom" placeholder="Nom produit">
+      <input id="pachat" type="number" placeholder="Prix Achat">
+      <input id="pprix" type="number" placeholder="Prix Unitaire">
+      <input id="pstock" type="number" placeholder="Stock">
+      <input id="pmin" type="number" placeholder="Stock min">
+      <button onclick="addProduit()">Ajouter</button>
+    </div>
+
+    <div class="card">
+      <h2>Liste Produits</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Prix Achat</th>
+            <th>Prix Unitaire</th>
+            <th>Stock</th>
+            <th>Montant</th>
+            <th>Bénéfice</th>
+            <th>Stock Min</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="produitTable"></tbody>
+        <tfoot>
+          <tr>
+            <td>TOTAL</td>
+            <td>-</td>
+            <td>-</td>
+            <td id="totalStock">0</td>
+            <td id="totalMontant">0</td>
+            <td id="totalBenefice">0</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- 🔹 LES VENTES - uniquement dans Produits -->
+  <div class="card">
+    <h2>💰 Ventes par Produit</h2>
+    <button onclick="afficherVentesProduit()">LES VENTES</button>
+    <div id="ventesProduit" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- 🔹 Historique des factures - uniquement dans Produits -->
+  <div class="card">
+    <h2>📜 Historique des factures</h2>
+    <button onclick="supprimerHistorique()" style="background:red;color:white;">🗑️ Supprimer Historique Factures</button>
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Client</th><th>Total</th></tr>
+      </thead>
+      <tbody id="factHist"></tbody>
+    </table>
+  </div>
+
+</section>
 
 <div id="editModal" style="display:none" class="card"> 
 <h2>Modifier / Approvisionner Produit</h2>
@@ -181,7 +299,11 @@ nav button.btn-jaune:active {
 </section>
 
 <!-- Librairies jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+// fonctions ici uniquement
 function toggleParam(){
  let m=document.getElementById("paramMenu");
  m.style.display = (m.style.display==="none")?"block":"none";
@@ -192,7 +314,6 @@ function copier(){document.execCommand('copy');alert('Texte copié');}
 function couper(){document.execCommand('cut');alert('Texte coupé');}
 function coller(){navigator.clipboard.readText().then(t=>{document.activeElement.value+=t});}
 function toutSelection(){let el=document.activeElement;if(el.select) el.select();}
-
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js">
 function toggleParam(){
@@ -233,11 +354,118 @@ function save(){
   localStorage.setItem("facturesAnnulables", JSON.stringify(facturesAnnulables));
   localStorage.setItem("pass", pass);
 }
-function show(id){document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));document.getElementById(id).classList.add("active");}
-function accessProduits(){let p=prompt("Mot de passe Produits");if(p===pass) show("produits"); else alert("Mot de passe incorrect");}
-function changerPass(){let np=newPass.value.trim();if(!np)return alert("Le mot de passe ne peut pas être vide");pass=np;save();alert("Mot de passe modifié");}
-function addProduit(){let nom=pnom.value.trim();let prix=+pprix.value;let stock=+pstock.value;let min=+pmin.value;if(!nom||prix<0||stock<0||min<0)return alert("Remplir correctement tous les champs !");produits.push({nom,prix,stock,min});save();afficherProduits();majDashboard();}
-function afficherProduits(){produitTable.innerHTML="";produitSelect.innerHTML="";produits.forEach((p,i)=>{produitTable.innerHTML+=`<tr><td>${p.nom}</td><td>${p.prix}</td><td>${p.stock}</td><td>${p.min}</td><td><button onclick="ouvrirEdit(${i})">✏️ Modifier</button><button onclick="approvisionner(${i})">➕ Approvisionner</button><button onclick="produits.splice(${i},1); save(); afficherProduits(); majDashboard()">❌ Supprimer</button></td></tr>`;produitSelect.innerHTML+=`<option value="${i}">${p.nom}</option>`;});save();}
+function show(id){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  // ✅ Correction coloration facturation
+  if(id === "facture"){
+      setTimeout(colorerChampsFacturation, 100);
+  }
+}
+function accessProduits(){
+    let p = prompt("Mot de passe Produits");
+    if(p === pass) show("produits");
+    else alert("Mot de passe incorrect");
+}
+
+function changerPass(){
+    let np = newPass.value.trim();
+    if(!np) return alert("Le mot de passe ne peut pas être vide");
+    pass = np;
+    save();
+    alert("Mot de passe modifié");
+}
+
+// 🔥 VARIABLES (déclarées sans valeur)
+let produitTable;
+let produitSelect;
+
+// 🔥 attendre chargement DOM
+window.onload = function(){
+    produitTable = document.getElementById("produitTable");
+    produitSelect = document.getElementById("produitSelect");
+
+    afficherProduits();
+};
+
+// ------------------- AJOUT PRODUIT -------------------
+function addProduit(){
+    let nom = pnom.value.trim();
+    let prix = +pprix.value;
+    let achat = +pachat.value;
+    let stock = +pstock.value;
+    let min = pmin.value ? +pmin.value : 2;
+
+    if(!nom || prix < 0 || achat < 0 || stock < 0){
+        alert("Remplir correctement tous les champs !");
+        return;
+    }
+
+    produits.push({nom, achat, prix, stock, min});
+    save();
+
+    document.getElementById("blocProduits").style.display = "block";
+
+    afficherProduits();
+    majDashboard();
+
+    pnom.value="";
+    pprix.value="";
+    pachat.value="";
+    pstock.value="";
+    pmin.value="";
+}
+
+// ------------------- AFFICHAGE PRODUITS -------------------
+function afficherProduits(){
+
+    if(!produitTable || !produitSelect) return;
+
+    produitTable.innerHTML = "";
+    produitSelect.innerHTML = "";
+
+    let totalMontant = 0;
+    let totalBenefice = 0;
+    let totalStock = 0;
+
+    produits.forEach((p, i) => {
+
+        let montant = p.prix * p.stock;
+        let benefice = (p.prix - p.achat) * p.stock;
+
+        totalMontant += montant;
+        totalBenefice += benefice;
+        totalStock += p.stock;
+
+        produitTable.innerHTML += `
+        <tr>
+            <td>${p.nom}</td>
+            <td>${p.achat} F</td>
+            <td>${p.prix} F</td>
+            <td>${p.stock}</td>
+            <td>${montant} F</td>
+            <td>${benefice} F</td>
+            <td>${p.min}</td>
+            <td>
+                <button onclick="ouvrirEdit(${i})">✏️</button>
+                <button onclick="approvisionner(${i})">➕</button>
+                <button onclick="produits.splice(${i},1); save(); afficherProduits(); majDashboard()">❌</button>
+            </td>
+        </tr>`;
+
+        produitSelect.innerHTML += `<option value="${i}">${p.nom}</option>`;
+    });
+
+    document.getElementById("totalStock").innerText = totalStock;
+    document.getElementById("totalMontant").innerText = totalMontant + " F";
+    document.getElementById("totalBenefice").innerText = totalBenefice + " F";
+}
+// ✅ Fonction séparée : afficher / cacher le bloc produits
+function toggleListeProduits(){
+    let bloc = document.getElementById("blocProduits");
+    bloc.style.display = (bloc.style.display === "none") ? "block" : "none";
+}
 function approvisionner(i){let q=Number(prompt("Quantité à ajouter au stock:"));if(isNaN(q)||q<=0){alert("Veuillez entrer un nombre valide supérieur à 0");return;}produits[i].stock+=q;save();afficherProduits();majDashboard();}
 function ouvrirEdit(i){editIndex=i;let p=produits[i];editNom.value=p.nom;editPrix.value=p.prix;editStock.value=p.stock;editMin.value=p.min;editModal.style.display="block";}
 function saveModification(){if(editIndex===null)return;let nom=editNom.value.trim();let prix=+editPrix.value;let stock=+editStock.value;let min=+editMin.value;if(!nom||prix<0||stock<0||min<0)return alert("Remplir correctement tous les champs !");produits[editIndex]={nom,prix,stock,min};editIndex=null;editModal.style.display="none";save();afficherProduits();majDashboard();}
@@ -303,18 +531,41 @@ function afficherFacturesPourAnnulation(){
     </tr>`;
   });
 }
-
 // Bloc 4 : Supprimer une facture spécifique
 function supprimerFacture(index){
-  if(confirm(`Voulez-vous vraiment supprimer la facture du ${facturesAnnulables[index].date} ?`)){
+  let facture = facturesAnnulables[index];
+
+  if(confirm(`Voulez-vous vraiment annuler la facture du ${facture.date} ?`)){
+
+    // 🔥 RESTAURER LE STOCK
+    facture.produits.forEach(item => {
+      let produit = produits.find(p => p.nom === item.nom);
+      if(produit){
+        produit.stock += item.qte; // remettre le stock
+      }
+    });
+
+    // ❌ Supprimer la facture uniquement dans la section Annulation
     facturesAnnulables.splice(index, 1);
+
     save();
+    afficherProduits();
     afficherFacturesPourAnnulation();
-    majDashboard();
-    alert("Facture supprimée !");
+    majDashboard(); // mettre à jour les totaux
+
+    alert("✅ Facture annulée et stock restauré !");
   }
 }
-function supprimerHistorique(){if(confirm("Voulez-vous vraiment supprimer tout l'historique des factures ?")){factures=[];save();afficherFactures();alert("Historique supprimé !");}}
+
+// Supprimer tout l'historique Produits (sans toucher aux factures annulables)
+function supprimerHistorique(){
+  if(confirm("Voulez-vous vraiment supprimer tout l'historique des factures (Produits) ?")){
+    factures = []; // on vide uniquement l'historique Produits
+    save();
+    afficherFactures(); // met à jour l'affichage dans Produits
+    alert("Historique des factures supprimé !");
+  }
+}
 function majDashboard(){
     totalProduits.innerText = produits.length;
     valeurStock.innerText = produits.reduce((s,p)=>s+p.prix*p.stock,0);
@@ -522,7 +773,173 @@ function copier(){document.execCommand('copy');alert('Texte copié');}
 function couper(){document.execCommand('cut');alert('Texte coupé');}
 function coller(){navigator.clipboard.readText().then(t=>{document.activeElement.value+=t});}
 function toutSelection(){let el=document.activeElement;if(el.select) el.select();}
+// ------------------- COLORATION PASTEL ALÉATOIRE DES LIGNES -------------------
+function randomPastelColor() {
+    const r = Math.floor(Math.random() * 127 + 127); // 127-254 pour couleurs douces
+    const g = Math.floor(Math.random() * 127 + 127);
+    const b = Math.floor(Math.random() * 127 + 127);
+    return `rgb(${r},${g},${b})`;
+}
 
+function colorerLignesPastel() {
+    document.querySelectorAll("table tbody").forEach(tbody => {
+        tbody.querySelectorAll("tr").forEach(tr => {
+            tr.style.backgroundColor = randomPastelColor();
+        });
+    });
+}
+
+// Appel initial pour colorer les lignes existantes
+colorerLignesPastel();
+
+// Observer pour colorer automatiquement les nouvelles lignes ajoutées dynamiquement
+const observerPastel = new MutationObserver(colorerLignesPastel);
+document.querySelectorAll("table tbody").forEach(tbody => 
+    observerPastel.observe(tbody, { childList: true })
+);
+// ------------------- TEXTE NOIR ET GRAS DANS TOUS LES TABLEAUX -------------------
+function rendreTexteTableauxLisible() {
+    document.querySelectorAll("table").forEach(table => {
+        // Style pour toutes les lignes du tbody
+        table.querySelectorAll("tbody tr").forEach(tr => {
+            tr.style.color = "#000";       // texte noir
+            tr.style.fontWeight = "bold";  // texte gras
+        });
+        // Style pour les en-têtes
+        table.querySelectorAll("thead th").forEach(th => {
+            th.style.color = "#000";
+            th.style.fontWeight = "bold";
+        });
+        // Style pour le footer si existant
+        table.querySelectorAll("tfoot td").forEach(td => {
+            td.style.color = "#000";
+            td.style.fontWeight = "bold";
+        });
+    });
+}
+
+// Appel initial pour appliquer le style aux tableaux existants
+rendreTexteTableauxLisible();
+
+// Observer pour appliquer automatiquement aux nouvelles lignes ou tableaux ajoutés dynamiquement
+const observerTable = new MutationObserver(rendreTexteTableauxLisible);
+document.querySelectorAll("table").forEach(table => 
+    observerTable.observe(table, { childList: true, subtree: true })
+);
+function colorerChampsFacturation() {
+    // Inputs et selects
+    document.querySelectorAll("#zoneFacture input, #zoneFacture select").forEach((el, i) => {
+        // Coloration de fond par ordre
+        if (i % 3 === 0) el.style.backgroundColor = "#0a7cff"; // bleu
+        else if (i % 3 === 1) el.style.backgroundColor = "#FFD700"; // jaune
+        else el.style.backgroundColor = "#8A2BE2"; // violet
+
+        // Texte blanc par défaut
+        el.style.color = "#fff";
+        el.style.fontWeight = "bold";
+
+        // Si c'est le champ Nom du client ou Quantité, on s'assure qu'il reste blanc
+        if(el.id === "clientFacture" || el.id === "qte") {
+            el.style.color = "#fff";
+        }
+    });
+
+    // Boutons
+    document.querySelectorAll("#zoneFacture button").forEach((btn, i) => {
+        if (i % 3 === 0) btn.style.backgroundColor = "#0a7cff"; // bleu
+        else if (i % 3 === 1) btn.style.backgroundColor = "#FFD700"; // jaune
+        else btn.style.backgroundColor = "#8A2BE2"; // violet
+        btn.style.color = "#fff";
+        btn.style.fontWeight = "bold";
+        btn.style.border = "none";
+    });
+
+    // Total Facture
+    const totalEl = document.getElementById("totalFacture");
+    if(totalEl) {
+        totalEl.style.color = "#0a7cff"; // bleu
+        totalEl.style.fontWeight = "bold";
+        totalEl.style.fontSize = "1.2em";
+    }
+}
+// ------------------- COLORATION DES CHAMPS DE FACTURATION -------------------
+function colorerChampsFacturation() {
+
+    const zone = document.getElementById("zoneFacture");
+    if(!zone) return; // 🔥 sécurité anti-bug
+
+    // Inputs et selects
+    zone.querySelectorAll("input, select").forEach((el, i) => {
+        if (i % 3 === 0) el.style.backgroundColor = "#0a7cff"; // bleu
+        else if (i % 3 === 1) el.style.backgroundColor = "#FFD700"; // jaune
+        else el.style.backgroundColor = "#8A2BE2"; // violet
+
+        el.style.color = "#fff";
+        el.style.fontWeight = "bold";
+    });
+
+    // Boutons
+    zone.querySelectorAll("button").forEach((btn, i) => {
+        if (i % 3 === 0) btn.style.backgroundColor = "#0a7cff";
+        else if (i % 3 === 1) btn.style.backgroundColor = "#FFD700";
+        else btn.style.backgroundColor = "#8A2BE2";
+
+        btn.style.color = "#fff";
+        btn.style.fontWeight = "bold";
+        btn.style.border = "none";
+    });
+
+    // Total
+    const totalEl = document.getElementById("totalFacture");
+    if(totalEl){
+        totalEl.style.color = "#0a7cff";
+        totalEl.style.fontWeight = "bold";
+        totalEl.style.fontSize = "1.2em";
+    }
+}
+
+// ------------------- INITIALISATION SÉCURISÉE -------------------
+window.addEventListener("load", () => {
+
+    // 🔥 coloration après chargement complet
+    setTimeout(colorerChampsFacturation, 200);
+
+    // 🔥 observer sécurisé (évite bug sur certains comptes)
+    const zone = document.getElementById("zoneFacture");
+    if(zone){
+        const observerFact = new MutationObserver(() => {
+            colorerChampsFacturation();
+        });
+
+        observerFact.observe(zone, {
+            childList: true,
+            subtree: true
+        });
+    }
+});
+function colorerSecteurProduits() {
+    const zone = document.getElementById("produits");
+    if (!zone) return;
+
+    // Coloration des inputs et selects
+    zone.querySelectorAll("input, select").forEach((el, i) => {
+        if (i % 3 === 0) el.className = "produit-rouge";
+        else if (i % 3 === 1) el.className = "produit-jaune";
+        else el.className = "produit-bleu";
+    });
+
+    // Coloration des boutons
+    zone.querySelectorAll("button").forEach((btn, i) => {
+        if (i % 3 === 0) btn.className = "produit-rouge";
+        else if (i % 3 === 1) btn.className = "produit-jaune";
+        else btn.className = "produit-bleu";
+    });
+}
+
+// Appel après chargement Produits
+window.addEventListener("load", () => {
+    setTimeout(colorerSecteurProduits, 200);
+});
 </script>
 </body>
 </html>
