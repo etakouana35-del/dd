@@ -132,6 +132,94 @@ body.sombre tfoot tr {
     transform: scale(1.02);
     transition: 0.2s;
 }
+/* ------------------- TABLEAU HISTORIQUE PRO ------------------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  background: #fff;
+}
+
+/* En-tête */
+thead {
+  background-color: #0a7cff;
+  color: #fff;
+}
+
+thead th {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+/* Corps du tableau */
+tbody td {
+  padding: 8px;
+  border: 1px solid #ccc;
+  text-align: center;
+  color: #000;
+  font-weight: bold;
+}
+
+/* Lignes alternées (lisibilité) */
+tbody tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+/* Effet survol */
+tbody tr:hover {
+  background-color: #d0e7ff;
+  transition: 0.2s;
+}
+
+/* Pied du tableau (TOTAUX) */
+tfoot {
+  background-color: #222;
+  color: #fff;
+  font-weight: bold;
+}
+
+tfoot td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-size: 15px;
+}
+
+/* ------------------- RESPONSIVE (MOBILE & PETITS ÉCRANS) ------------------- */
+@media screen and (max-width: 768px) {
+  table {
+    font-size: 12px;
+  }
+
+  th, td {
+    padding: 6px;
+  }
+}
+
+/* ------------------- COMPATIBILITÉ THÈME SOMBRE ------------------- */
+body.sombre table {
+  background-color: #1e1e1e;
+}
+
+body.sombre thead {
+  background-color: #333;
+}
+
+body.sombre tbody td {
+  color: #fff;
+  border-color: #555;
+}
+
+body.sombre tbody tr:nth-child(even) {
+  background-color: #2a2a2a;
+}
+
+body.sombre tfoot {
+  background-color: #000;
+}
 </style>
 </head>
 
@@ -236,16 +324,38 @@ body.sombre tfoot tr {
   </div>
 
   <!-- 🔹 Historique des factures - uniquement dans Produits -->
-  <div class="card">
-    <h2>📜 Historique des factures</h2>
-    <button onclick="supprimerHistorique()" style="background:red;color:white;">🗑️ Supprimer Historique Factures</button>
-    <table>
-      <thead>
-        <tr><th>Date</th><th>Client</th><th>Total</th></tr>
-      </thead>
-      <tbody id="factHist"></tbody>
-    </table>
-  </div>
+<div class="card">
+  <h2>📜 Historique des factures</h2>
+
+  <button onclick="supprimerHistorique()" style="background:red;color:white;">
+    🗑️ Supprimer Historique Factures
+  </button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Client</th>
+        <th>Produit</th>
+        <th>Quantité</th>
+        <th>Prix Unitaire</th>
+        <th>Montant</th>
+        <th>Bénéfice</th>
+      </tr>
+    </thead>
+
+    <tbody id="factHist"></tbody>
+
+    <tfoot>
+      <tr>
+        <td colspan="2"><strong>TOTAUX</strong></td>
+        <td id="totalQteFact">0</td>
+        <td>-</td>
+        <td id="totalMontantFact">0 F</td>
+        <td id="totalBeneficeFact">0 F</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
 
 </section>
 
@@ -500,7 +610,68 @@ function finaliserFacture(){
   save();
 }
 
-function afficherFactures(){factHist.innerHTML="";factures.forEach(f=>{factHist.innerHTML+=`<tr><td>${f.date}</td><td>${f.client}</td><td>${f.total} F</td></tr>`;});}
+function afficherFactures(){
+
+  const tbody = document.getElementById("factHist");
+  const totalQteEl = document.getElementById("totalQteFact");
+  const totalMontantEl = document.getElementById("totalMontantFact");
+  const totalBeneficeEl = document.getElementById("totalBeneficeFact");
+
+  if(!tbody) return;
+
+  tbody.innerHTML = "";
+
+  let totalQte = 0;
+  let totalMontant = 0;
+  let totalBenefice = 0;
+
+  if(!factures || factures.length === 0){
+    tbody.innerHTML = `<tr><td colspan="6">Aucune facture disponible</td></tr>`;
+    totalQteEl.innerText = "0";
+    totalMontantEl.innerText = "0 F";
+    totalBeneficeEl.innerText = "0 F";
+    return;
+  }
+
+  factures.forEach(f => {
+
+    if(!f.produits) return;
+
+    f.produits.forEach(item => {
+
+      let produit = produits.find(p => p.nom === item.nom);
+
+      let achat = produit ? Number(produit.achat) : 0;
+      let prix = Number(item.prix) || 0;
+      let qte = Number(item.qte) || 0;
+      let montant = Number(item.total) || (prix * qte);
+
+      let benefice = (prix - achat) * qte;
+
+      totalQte += qte;
+      totalMontant += montant;
+      totalBenefice += benefice;
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${f.client || "-"}</td>
+        <td>${item.nom || "-"}</td>
+        <td>${qte}</td>
+        <td>${prix.toLocaleString()} F</td>
+        <td>${montant.toLocaleString()} F</td>
+        <td>${benefice.toLocaleString()} F</td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+  });
+
+  totalQteEl.innerText = totalQte.toLocaleString();
+  totalMontantEl.innerText = totalMontant.toLocaleString() + " F";
+  totalBeneficeEl.innerText = totalBenefice.toLocaleString() + " F";
+}
 function accessAnnulerFacture(){
   // Masquer toutes les autres sections
   document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
